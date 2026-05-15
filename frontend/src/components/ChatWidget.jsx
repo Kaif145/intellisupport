@@ -15,7 +15,7 @@ const ChatWidget = ({ companyId }) => {
     const fetchConfig = async () => {
       try {
         const { data } = await axios.get(
-          `http://localhost:5000/api/widget/${companyId}`
+          `https://intellisupport-production.up.railway.app/api/widget/${companyId}`
         );
         setConfig(data.config);
         setMessages([{
@@ -44,7 +44,7 @@ const ChatWidget = ({ companyId }) => {
 
     try {
       const { data } = await axios.post(
-        'http://localhost:5000/api/chat/message',
+        'https://intellisupport-production.up.railway.app/api/chat/message',
         {
           companyId,
           sessionId,
@@ -77,7 +77,7 @@ const ChatWidget = ({ companyId }) => {
   const handleEscalate = async () => {
     if (!sessionId) return;
     try {
-      await axios.post('http://localhost:5000/api/tickets', {
+      await axios.post('https://intellisupport-production.up.railway.app/api/tickets', {
         companyId,
         sessionId,
         visitorMessage: 'Customer requested human support'
