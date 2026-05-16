@@ -7,12 +7,6 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-// import Groq from 'groq-sdk';
-
-// const groq = new Groq({
-//   apiKey: process.env.GROQ_API_KEY
-// });
-
 const getChatReply = async ({
   userMessage,
   chatHistory = [],

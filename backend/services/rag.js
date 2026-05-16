@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 
 // Each company gets their own vector index folder
 const getIndex = async (companyId) => {
@@ -45,12 +45,6 @@ const chunkText = (text, chunkSize = 500, overlap = 50) => {
   return chunks;
 };
 
-
-
-
-
-
-// Convert text to vector using Groq embeddings
 // Convert text to vector using simple local embeddings
 const getEmbedding = async (text) => {
   const words = text.toLowerCase().split(/\s+/);
