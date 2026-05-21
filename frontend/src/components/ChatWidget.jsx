@@ -1,3 +1,5 @@
+const BASE = import.meta.env.VITE_API_URL?.replace('/api','') || 'http://localhost:5000';
+
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
@@ -14,9 +16,8 @@ const ChatWidget = ({ companyId }) => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data } = await axios.get(
-          `https://intellisupport-production.up.railway.app/api/widget/${companyId}`
-        );
+       const { data } = await axios.get(`${BASE}/api/widget/${companyId}`);
+
         setConfig(data.config);
         setMessages([{
           role: 'assistant',
@@ -43,8 +44,7 @@ const ChatWidget = ({ companyId }) => {
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-        'https://intellisupport-production.up.railway.app/api/chat/message',
+      const { data } = await axios.post(`${BASE}/api/chat/message`,
         {
           companyId,
           sessionId,
@@ -77,7 +77,7 @@ const ChatWidget = ({ companyId }) => {
   const handleEscalate = async () => {
     if (!sessionId) return;
     try {
-      await axios.post('https://intellisupport-production.up.railway.app/api/tickets', {
+      await axios.post(`${BASE}/api/tickets`, {
         companyId,
         sessionId,
         visitorMessage: 'Customer requested human support'
