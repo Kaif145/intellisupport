@@ -1,159 +1,380 @@
-IntelliSupport
-AI-Powered Customer Support Chatbot Platform
-Live Demo: https://intellisupport.vercel.app/
+<img src="https://img.icons8.com/fluency/48/chatbot.png" width="35"/> IntelliSupport
+AI-Powered Customer Support Automation Platform
+https://img.shields.io/badge/%F0%9F%9A%80_Live_Demo-IntelliSupport-00C853?style=for-the-badge&logo=vercel&logoColor=white
+https://img.shields.io/badge/Backend-Railway-9B59B6?style=for-the-badge&logo=railway&logoColor=white
+https://img.shields.io/badge/Frontend-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white
+https://img.shields.io/badge/License-MIT-F39C12?style=for-the-badge&logo=opensourceinitiative&logoColor=white
 
+📖 Table of Contents
 Overview
-IntelliSupport is a B2B SaaS platform that enables any company to deploy their own branded AI chatbot on their website. The chatbot answers customer questions using the company's own documents (PDFs, text files) through Retrieval-Augmented Generation (RAG) technology.
-
-Companies simply sign up, upload their documentation, copy a single line of embed code, and instantly have an intelligent support agent that understands their business.
 
 Key Features
-For Companies
-Secure Registration & Login — JWT-based authentication
 
-Document Management — Upload PDF/TXT files; system automatically indexes them
+Architecture
 
-AI Chatbot — Powered by Groq's Llama 3.3 70B model
+Technology Stack
 
-RAG Pipeline — Bot answers only from uploaded company documents
-
-Widget Customization — Customize bot name, color, and welcome message
-
-Analytics Dashboard — Track total chats, messages per day, top questions, and RAG usage
-
-Human Handoff — Visitors can escalate to a human; tickets appear in dashboard
-
-Ticket Management — Manage support tickets (open, in-progress, closed)
-
-For Website Visitors
-Floating chat bubble with company branding
-
-Instant answers from company's documentation
-
-Option to request human assistance
-
-Tech Stack
-Category	Technologies
-Frontend	React.js, Vite, React Router DOM, Axios, React Hot Toast, Lucide React, CSS Variables
-Backend	Node.js, Express.js v5, ES Modules
-Database	MongoDB Atlas, Mongoose
-Authentication	JWT, bcryptjs
-AI/LLM	Groq API (llama-3.3-70b-versatile)
-RAG Pipeline	pdf-parse, vectra (local vector DB), custom embeddings (384-dim, normalized)
-File Handling	multer (PDF/TXT, up to 10MB)
-Deployment	Backend: Railway | Frontend: Vercel
-How RAG Works
-Phase 1 — Indexing (Document Upload)
-Extract text from uploaded PDF/TXT
-
-Split into 500-character chunks with 50-character overlap
-
-Convert each chunk to 384-dimension vector (custom word-frequency embedding)
-
-Store vectors in per-company isolated index folder: vectorstore/{companyId}/
-
-Phase 2 — Retrieval (Each Chat Message)
-Convert user's message to vector using same embedding function
-
-Search company's vector index for top 3 most similar chunks
-
-Filter results with similarity score > 0.1
-
-Inject relevant chunks into Groq LLM's system prompt
-
-LLM answers using only retrieved content
-
-Save interaction with usedRAG flag
+RAG Pipeline
 
 API Endpoints
-Method	Endpoint	Description
-POST	/api/auth/register	Register company
-POST	/api/auth/login	Login
-GET	/api/auth/me	Get current company
-POST	/api/chat/message	Send message, get AI reply (public)
-GET	/api/chat/history/:id	Get conversation history
-POST	/api/documents/upload	Upload & index document
-GET	/api/documents	List all documents
-DELETE	/api/documents/:id	Delete document
-GET	/api/widget/:companyId	Get widget config (public)
-PUT	/api/settings/bot	Update bot customization
-PUT	/api/settings/password	Update password
-GET	/api/analytics/overview	Get stats overview
-GET	/api/analytics/conversations	Recent conversations
-POST	/api/tickets	Create handoff ticket (public)
-GET	/api/tickets	List all tickets
-PUT	/api/tickets/:id	Update ticket status
+
+Database Schema
+
+Quick Start
+
+Deployment
+
 Project Structure
-text
-intellisupport/
-├── backend/
-│   ├── config/db.js           # MongoDB connection
-│   ├── models/                # Company, Conversation, Message, Document, Ticket
-│   ├── routes/                # auth, chat, documents, widget, settings, analytics, tickets
-│   ├── middleware/auth.js     # JWT verification
-│   ├── services/
-│   │   ├── claude.js          # Groq AI chat service
-│   │   └── rag.js             # RAG pipeline (embedding, indexing, retrieval)
-│   ├── uploads/               # Temporary file storage
-│   ├── vectorstore/           # Per-company vector indexes
-│   └── server.js
-└── frontend/src/
-    ├── api/axios.js           # Axios with JWT interceptor
-    ├── context/AuthContext.jsx
-    ├── components/            # Sidebar, DashboardLayout, ProtectedRoute, ChatWidget
-    └── pages/                 # Home, Login, Register, Dashboard, Documents, Settings, Analytics, Tickets, EmbedCode
-Running Locally
-Prerequisites
-Node.js v18+
 
-MongoDB Atlas account (free tier)
+Challenges & Solutions
 
-Groq API key (console.groq.com — free)
-
-Backend Setup
-bash
-cd intellisupport/backend
-npm install
-
-# Create .env file
-cat > .env << EOF
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-GROQ_API_KEY=your_groq_api_key
-FRONTEND_URL=http://localhost:5173
-PORT=5000
-EOF
-
-npm run dev   # Runs on port 5000
-Frontend Setup
-bash
-cd intellisupport/frontend
-npm install
-npm run dev   # Runs on port 5173
-Visit: http://localhost:5173
-
-Challenges Overcome
-Challenge	Solution
-LangChain.js version conflicts	Switched to vectra + custom embeddings
-pdf-parse ESM/CJS conflict	Used createRequire
-Groq doesn't support embeddings API	Built custom local embedding function (word-frequency, 384-dim, normalized)
-Express v5 middleware changes	next() must be called with return
-Mongoose v9 pre-save hooks	Async hooks no longer need next parameter
-dotenv loading order	Import dotenv before any service using env vars
-MongoDB Atlas IP whitelist	Allowed all IPs for development
-Planned Features
-WhatsApp & Slack channel integration
-
-Real-time streaming responses (WebSockets/SSE)
-
-Sentiment analysis on customer messages
-
-Email notifications for new tickets
-
-Billing & subscription management
+Roadmap
 
 License
-MIT
 
-Contact
-For questions or support, please open an issue on the repository.
+🎯 Overview
+IntelliSupport is a production-ready B2B SaaS platform that enables businesses to deploy custom-branded AI chatbots on their websites. Using Retrieval-Augmented Generation (RAG) , the chatbot answers customer queries exclusively from the company's own documentation—ensuring accurate, context-aware, and secure responses.
+
+Aspect	Details
+Type	Multi-tenant B2B SaaS Platform
+Core Function	AI-powered customer support automation
+Differentiator	RAG-based answers from proprietary documents
+Target Users	Businesses needing automated support without AI expertise
+🔗 Live Demo: https://intellisupport.vercel.app/
+
+✨ Key Features
+For Companies
+Feature	Description
+🔐 Secure Authentication	JWT-based registration and login with bcrypt password hashing
+📄 Document Management	Upload PDF/TXT files; automatic text extraction and indexing
+🤖 AI Chatbot	Powered by Groq's Llama 3.3-70B model for fast, intelligent responses
+🎨 Full Customization	Custom bot name, brand color, and welcome message
+📊 Analytics Dashboard	Track total chats, daily messages, top questions, and RAG usage metrics
+🎫 Ticket System	Human handoff capability with full chat history preservation
+💻 One-Click Embed	Simple <script> tag embed code for any website
+For Website Visitors
+Feature	Description
+💬 Floating Widget	Non-intrusive chat bubble with brand colors
+⚡ Instant Responses	Real-time answers from company documentation
+👤 Human Escalation	Option to request live agent assistance
+📝 Conversation History	Persistent chat sessions across pages
+🏗️ Architecture
+text
+┌─────────────────────────────────────────────────────────────────┐
+│                         VISITOR WEBSITE                          │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              Embeddable Chat Widget (React)              │    │
+│  └─────────────────────────┬───────────────────────────────┘    │
+└────────────────────────────┼────────────────────────────────────┘
+                             │ HTTPS / REST API
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    BACKEND (Node.js + Express)                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │   Auth API   │  │  Chat API    │  │   Document API       │  │
+│  └──────────────┘  └──────┬───────┘  └──────────┬───────────┘  │
+│                           │                      │              │
+│                           ▼                      ▼              │
+│                    ┌──────────────┐      ┌──────────────┐       │
+│                    │  Groq LLM    │      │  RAG Service │       │
+│                    │  (Llama 3.3) │      │  + vectra    │       │
+│                    └──────────────┘      └──────────────┘       │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     MONGODB ATLAS (Cloud)                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐│
+│  │ Company  │ │Conversa- │ │ Message  │ │ Document │ │ Ticket ││
+│  │          │ │  tion    │ │          │ │          │ │        ││
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └────────┘│
+└─────────────────────────────────────────────────────────────────┘
+🛠️ Technology Stack
+Frontend
+Technology	Purpose
+React.js 18	UI framework
+Vite	Build tool & dev server
+React Router DOM	Client-side routing
+Axios	HTTP client with JWT interceptor
+React Hot Toast	Toast notifications
+Lucide React	Icon library
+CSS Variables	Theming & styling
+Backend
+Technology	Purpose
+Node.js	JavaScript runtime
+Express.js v5	Web framework
+MongoDB Atlas	Cloud database
+Mongoose v9	ODM for MongoDB
+JWT + bcryptjs	Authentication
+Groq SDK	LLM inference (Llama 3.3-70B)
+Multer	File upload handling
+RAG Pipeline
+Technology	Purpose
+pdf-parse	PDF text extraction
+vectra	Local vector database
+Custom Embeddings	384-dimension word-frequency vectors
+🔬 RAG Pipeline
+Phase 1: Indexing (Document Upload)
+
+
+
+
+
+Phase 2: Retrieval (Chat Message)
+
+
+
+
+
+
+
+
+
+
+Vector Store Isolation
+text
+vectorstore/
+├── {companyId_1}/
+│   ├── vectors.json
+│   └── metadata.json
+├── {companyId_2}/
+│   ├── vectors.json
+│   └── metadata.json
+└── ...
+📡 API Endpoints
+Authentication
+Method	Endpoint	Description	Auth
+POST	/api/auth/register	Register new company	Public
+POST	/api/auth/login	Login with credentials	Public
+GET	/api/auth/me	Get current user info	Bearer
+Chat
+Method	Endpoint	Description	Auth
+POST	/api/chat/message	Send message & get AI reply	Public
+GET	/api/chat/history/:id	Get conversation history	Public
+Documents
+Method	Endpoint	Description	Auth
+POST	/api/documents/upload	Upload & index document	Bearer
+GET	/api/documents	List all documents	Bearer
+DELETE	/api/documents/:id	Delete document	Bearer
+Settings
+Method	Endpoint	Description	Auth
+PUT	/api/settings/bot	Update bot customization	Bearer
+PUT	/api/settings/password	Update password	Bearer
+Analytics
+Method	Endpoint	Description	Auth
+GET	/api/analytics/overview	Get statistics	Bearer
+GET	/api/analytics/conversations	Recent conversations	Bearer
+Tickets
+Method	Endpoint	Description	Auth
+POST	/api/tickets	Create handoff ticket	Public
+GET	/api/tickets	List all tickets	Bearer
+PUT	/api/tickets/:id	Update ticket status	Bearer
+Widget
+Method	Endpoint	Description	Auth
+GET	/api/widget/:companyId	Get widget configuration	Public
+🗄️ Database Schema
+Company Model
+javascript
+{
+  name: String,              // Company name
+  email: String,             // Unique login email
+  password: String,          // bcrypt-hashed
+  botName: String,           // Custom bot display name
+  botColor: String,          // Brand hex color
+  welcomeMessage: String,    // Initial chat message
+  plan: ['free', 'growth', 'enterprise'],
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+Conversation Model
+javascript
+{
+  company: ObjectId,         // Reference to Company
+  sessionId: String,         // Unique session identifier
+  visitorId: String,         // Anonymous visitor ID
+  status: ['active', 'resolved', 'escalated'],
+  messageCount: Number,
+  createdAt: Date,
+  updatedAt: Date
+}
+Message Model
+javascript
+{
+  conversation: ObjectId,    // Reference to Conversation
+  company: ObjectId,         // Reference to Company
+  role: ['user', 'assistant'],
+  content: String,
+  usedRAG: Boolean,          // Whether RAG was used
+  createdAt: Date
+}
+Document Model
+javascript
+{
+  company: ObjectId,         // Reference to Company
+  filename: String,          // Stored filename
+  originalName: String,      // Original uploaded name
+  fileType: ['pdf', 'txt'],
+  fileSize: Number,          // Bytes
+  chunkCount: Number,
+  status: ['processing', 'ready', 'failed'],
+  createdAt: Date
+}
+Ticket Model
+javascript
+{
+  company: ObjectId,         // Reference to Company
+  conversation: ObjectId,    // Reference to Conversation
+  visitorMessage: String,    // Initial escalation message
+  chatHistory: Array,        // Full conversation log
+  status: ['open', 'in-progress', 'closed'],
+  priority: ['low', 'medium', 'high'],
+  createdAt: Date,
+  updatedAt: Date
+}
+🚀 Quick Start
+Prerequisites
+Requirement	Version
+Node.js	v18+
+npm	v9+
+MongoDB Atlas	Free tier
+Groq API Key	Free at console.groq.com
+Installation
+1. Clone the Repository
+bash
+git clone https://github.com/yourusername/intellisupport.git
+cd intellisupport
+2. Backend Setup
+bash
+cd backend
+npm install
+Create .env file:
+
+env
+PORT=5000
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/intellisupport
+JWT_SECRET=your_super_secret_jwt_key_here
+GROQ_API_KEY=gsk_your_groq_api_key_here
+FRONTEND_URL=http://localhost:5173
+Start the backend:
+
+bash
+npm run dev
+# Server running on http://localhost:5000
+3. Frontend Setup
+bash
+cd ../frontend
+npm install
+Create .env file:
+
+env
+VITE_API_URL=http://localhost:5000/api
+Start the frontend:
+
+bash
+npm run dev
+# Application running on http://localhost:5173
+🌐 Deployment
+Backend (Railway)
+bash
+cd backend
+railway login
+railway init
+railway up
+Add environment variables in Railway dashboard.
+
+Frontend (Vercel)
+bash
+cd frontend
+vercel login
+vercel --prod
+Set VITE_API_URL to your Railway backend URL in Vercel dashboard.
+
+📁 Project Structure
+text
+intellisupport/
+│
+├── backend/
+│   ├── config/
+│   │   └── db.js                 # MongoDB connection
+│   ├── models/
+│   │   ├── Company.js
+│   │   ├── Conversation.js
+│   │   ├── Message.js
+│   │   ├── Document.js
+│   │   └── Ticket.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── chat.js
+│   │   ├── documents.js
+│   │   ├── widget.js
+│   │   ├── settings.js
+│   │   ├── analytics.js
+│   │   └── tickets.js
+│   ├── middleware/
+│   │   └── auth.js               # JWT verification
+│   ├── services/
+│   │   ├── groq.js               # Groq LLM service
+│   │   └── rag.js                # RAG pipeline
+│   ├── uploads/                  # Temporary uploads
+│   ├── vectorstore/              # Vector indexes
+│   └── server.js
+│
+└── frontend/
+    └── src/
+        ├── api/
+        │   └── axios.js          # Axios with JWT interceptor
+        ├── context/
+        │   └── AuthContext.jsx   # Global auth state
+        ├── components/
+        │   ├── Sidebar.jsx
+        │   ├── DashboardLayout.jsx
+        │   ├── ProtectedRoute.jsx
+        │   └── ChatWidget.jsx
+        └── pages/
+            ├── Home.jsx
+            ├── Login.jsx
+            ├── Register.jsx
+            ├── Dashboard.jsx
+            ├── Documents.jsx
+            ├── Settings.jsx
+            ├── Analytics.jsx
+            ├── Tickets.jsx
+            └── EmbedCode.jsx
+⚠️ Challenges & Solutions
+Challenge	Solution
+LangChain.js version conflicts	Migrated to vectra with custom embedding implementation
+pdf-parse ESM/CJS incompatibility	Used createRequire from node:module for CommonJS import
+Groq lacks embeddings API	Built custom 384-dimension word-frequency embedding function
+Express v5 middleware signature change	Added explicit return before next() calls
+Mongoose v9 pre-save hooks	Removed next parameter (async hooks no longer require it)
+dotenv loading order	Imported dotenv/config before all service imports
+MongoDB Atlas IP restrictions	Configured IP whitelist to allow all for development environment
+🗺️ Roadmap
+Status	Feature
+✅	Core RAG pipeline with custom embeddings
+✅	Multi-tenant document isolation
+✅	Embeddable chat widget
+✅	Human handoff & ticket system
+✅	Analytics dashboard
+🔄	WhatsApp Business API integration
+🔄	Slack channel support
+📅	Real-time streaming (WebSocket/SSE)
+📅	Sentiment analysis on conversations
+📅	Email notifications for tickets
+📅	Stripe billing & subscription tiers
+📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+🙏 Acknowledgments
+Groq for free LLM inference
+
+MongoDB Atlas for cloud database
+
+Vectra for local vector database
+
+<div align="center">
+Built with ❤️ for businesses that value customer support
+
+Report Bug · Request Feature · Live Demo
+
