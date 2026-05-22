@@ -14,11 +14,11 @@ const EmbedCode = () => {
       companyId: '${company?.id}'
     };
     var script = document.createElement('script');
-    script.src = 'http://localhost:5173/widget.js';
+    script.src = 'https://intellisupport.vercel.app/widget.js';
     script.async = true;
     document.head.appendChild(script);
   })();
-</script>`;
+<\/script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(embedCode);
