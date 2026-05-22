@@ -6,47 +6,38 @@ import path from 'path';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
-import { LocalIndex } from 'vectra';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ── Vector schema stored in MongoDB ──
+const vectorSchema = new mongoose.Schema({
+  companyId: { type: String, required: true, index: true },
+  documentId: { type: String, required: true },
+  chunkIndex: { type: Number, required: true },
+  text: { type: String, required: true },
+  vector: { type: [Number], required: true }
+}, { timestamps: true });
 
+const Vector = mongoose.models.Vector || mongoose.model('Vector', vectorSchema);
 
-// Each company gets their own vector index folder
-const getIndex = async (companyId) => {
-  const indexPath = path.join(__dirname, '../vectorstore', companyId.toString());
-  
-  // Always create fresh if it doesn't exist
-  if (!fs.existsSync(indexPath)) {
-    fs.mkdirSync(indexPath, { recursive: true });
-  }
-  
-  const index = new LocalIndex(indexPath);
-  if (!await index.isIndexCreated()) {
-    await index.createIndex();
-  }
-  return index;
-};
-
-// Split text into small chunks
+// ── Split text into chunks ──
 const chunkText = (text, chunkSize = 500, overlap = 50) => {
   const chunks = [];
   let start = 0;
   while (start < text.length) {
     const end = Math.min(start + chunkSize, text.length);
     const chunk = text.slice(start, end).trim();
-    if (chunk.length > 20) {
-      chunks.push(chunk);
-    }
+    if (chunk.length > 20) chunks.push(chunk);
     start += chunkSize - overlap;
   }
   return chunks;
 };
 
-// Convert text to vector using simple local embeddings
-const getEmbedding = async (text) => {
+// ── Local embedding function ──
+const getEmbedding = (text) => {
   const words = text.toLowerCase().split(/\s+/);
   const vector = new Array(384).fill(0);
   words.forEach((word, i) => {
@@ -54,12 +45,22 @@ const getEmbedding = async (text) => {
       vector[(word.charCodeAt(j) * (i + 1)) % 384] += 1;
     }
   });
-  // Normalize
   const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
   return magnitude > 0 ? vector.map(v => v / magnitude) : vector;
 };
 
-// Extract text from PDF or TXT file
+// ── Cosine similarity ──
+const cosineSimilarity = (a, b) => {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB) || 1);
+};
+
+// ── Extract text from file ──
 const extractText = async (filePath, fileType) => {
   if (fileType === 'pdf') {
     const dataBuffer = fs.readFileSync(filePath);
@@ -71,36 +72,40 @@ const extractText = async (filePath, fileType) => {
   throw new Error('Unsupported file type');
 };
 
-// INDEX a document — called when company uploads a file
-const indexDocument = async (companyId, filePath, fileType) => {
+// ── INDEX a document ──
+const indexDocument = async (companyId, filePath, fileType, documentId) => {
   try {
     console.log(`📂 Starting indexing for company: ${companyId}`);
     console.log(`📄 File: ${filePath}, Type: ${fileType}`);
-    
+
     const text = await extractText(filePath, fileType);
     console.log(`📝 Extracted text length: ${text.length} characters`);
     console.log(`📝 First 200 chars: ${text.slice(0, 200)}`);
-    
+
     const chunks = chunkText(text);
     console.log(`📄 Processing ${chunks.length} chunks...`);
 
-    const index = await getIndex(companyId);
+    // Delete old vectors for this document
+    await Vector.deleteMany({ 
+      companyId: companyId.toString(), 
+      documentId: documentId.toString() 
+    });
 
+    // Insert new vectors
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      const embedding = await getEmbedding(chunk);
-      await index.insertItem({
-        vector: embedding,
-        metadata: { 
-          text: chunk,
-          companyId: companyId.toString(),
-          chunkIndex: i
-        }
+      const vector = getEmbedding(chunk);
+      await Vector.create({
+        companyId: companyId.toString(),
+        documentId: documentId.toString(),
+        chunkIndex: i,
+        text: chunk,
+        vector
       });
       console.log(`✅ Indexed chunk ${i + 1}/${chunks.length}: ${chunk.slice(0, 50)}...`);
     }
 
-    console.log(`🎉 Document fully indexed!`);
+    console.log(`🎉 Document fully indexed in MongoDB!`);
     return chunks.length;
   } catch (error) {
     console.error('❌ Indexing error:', error);
@@ -108,24 +113,37 @@ const indexDocument = async (companyId, filePath, fileType) => {
   }
 };
 
-// SEARCH — called on every chat message
+// ── SEARCH documents ──
 const searchDocuments = async (companyId, query, topK = 3) => {
   try {
-    const index = await getIndex(companyId);
-    const stats = await index.getIndexStats();
-    
-    console.log(`🔍 Searching index with ${stats.items} items`);
-    
-    if (stats.items === 0) return [];
+    // Get all vectors for this company
+    const allVectors = await Vector.find({ 
+      companyId: companyId.toString() 
+    });
 
-    const queryEmbedding = await getEmbedding(query);
-    const results = await index.queryItems(queryEmbedding, topK);
-    
-    console.log('📊 Search scores:', results.map(r => r.score));
+    console.log(`🔍 Searching ${allVectors.length} vectors for company ${companyId}`);
 
-    return results
-      .filter(r => r.score > 0.1)
-      .map(r => r.item.metadata.text);
+    if (allVectors.length === 0) return [];
+
+    // Embed query
+    const queryVector = getEmbedding(query);
+
+    // Calculate similarity scores
+    const scored = allVectors.map(v => ({
+      text: v.text,
+      score: cosineSimilarity(queryVector, v.vector)
+    }));
+
+    // Sort by score descending
+    scored.sort((a, b) => b.score - a.score);
+
+    console.log('📊 Top scores:', scored.slice(0, 3).map(s => s.score.toFixed(3)));
+
+    // Return top K results above threshold
+    return scored
+      .filter(s => s.score > 0.1)
+      .slice(0, topK)
+      .map(s => s.text);
 
   } catch (error) {
     console.error('Search error:', error);
@@ -133,16 +151,27 @@ const searchDocuments = async (companyId, query, topK = 3) => {
   }
 };
 
-// DELETE all vectors for a company document
-const deleteCompanyIndex = async (companyId) => {
+// ── DELETE all vectors for a company document ──
+const deleteDocumentVectors = async (companyId, documentId) => {
   try {
-    const indexPath = path.join(__dirname, '../vectorstore', companyId.toString());
-    if (fs.existsSync(indexPath)) {
-      fs.rmSync(indexPath, { recursive: true });
-    }
+    await Vector.deleteMany({ 
+      companyId: companyId.toString(),
+      documentId: documentId.toString()
+    });
+    console.log(`🗑️ Deleted vectors for document ${documentId}`);
   } catch (error) {
-    console.error('Delete index error:', error);
+    console.error('Delete vectors error:', error);
   }
 };
 
-export { indexDocument, searchDocuments, deleteCompanyIndex };
+// ── DELETE all vectors for a company ──
+const deleteCompanyIndex = async (companyId) => {
+  try {
+    await Vector.deleteMany({ companyId: companyId.toString() });
+    console.log(`🗑️ Deleted all vectors for company ${companyId}`);
+  } catch (error) {
+    console.error('Delete company index error:', error);
+  }
+};
+
+export { indexDocument, searchDocuments, deleteDocumentVectors, deleteCompanyIndex };

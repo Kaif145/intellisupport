@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import Document from '../models/Document.js';
 import protect from '../middleware/auth.js';
-import { indexDocument, deleteCompanyIndex } from '../services/rag.js';
+import { indexDocument, deleteDocumentVectors, deleteCompanyIndex } from '../services/rag.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,21 +66,20 @@ router.post('/upload', protect, upload.single('document'), async (req, res) => {
       status: 'processing'
     });
 
-    // Index the document in background
-    indexDocument(companyId, req.file.path, fileExt)
-      .then(async (chunkCount) => {
-        await Document.findByIdAndUpdate(document._id, {
-          status: 'ready',
-          chunkCount
-        });
-        console.log(`✅ Document indexed: ${req.file.originalname}`);
-      })
-      .catch(async (error) => {
-        await Document.findByIdAndUpdate(document._id, {
-          status: 'failed'
-        });
-        console.error('Indexing failed:', error);
-      });
+    indexDocument(companyId, req.file.path, fileExt, document._id)
+  .then(async (chunkCount) => {
+    await Document.findByIdAndUpdate(document._id, {
+      status: 'ready',
+      chunkCount
+    });
+    console.log(`✅ Document indexed: ${req.file.originalname}`);
+  })
+  .catch(async (error) => {
+    await Document.findByIdAndUpdate(document._id, {
+      status: 'failed'
+    });
+    console.error('Indexing failed:', error);
+  });
 
     res.status(201).json({
       success: true,
@@ -152,6 +151,9 @@ router.delete('/:id', protect, async (req, res) => {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
+
+    // Delete vectors from MongoDB
+    await deleteDocumentVectors(req.company._id, document._id);
 
     // Delete from MongoDB
     await Document.findByIdAndDelete(req.params.id);
