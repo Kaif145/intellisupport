@@ -39,6 +39,10 @@ const companySchema = new mongoose.Schema({
     enum: ['free', 'growth', 'enterprise'],
     default: 'free'
   },
+  isDemo: {
+    type: Boolean,
+    default: false
+  },
   isActive: {
     type: Boolean,
     default: true

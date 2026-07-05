@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import API from "../api/axios";
+import toast from "react-hot-toast";
 
 const Register = () => {
-  const [form, setForm] = useState({ 
-    name: '', 
-    email: '', 
-    password: '' 
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
   });
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -21,17 +21,17 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error("Password must be at least 6 characters");
       return;
     }
     setLoading(true);
     try {
-      const { data } = await API.post('/auth/register', form);
+      const { data } = await API.post("/auth/register", form);
       login(data.token, data.company);
-      toast.success('Account created successfully!');
-      navigate('/dashboard');
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+      toast.error(error.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -40,12 +40,12 @@ const Register = () => {
   const handleDemoLogin = async () => {
     setLoading(true);
     try {
-      const { data } = await API.post('/auth/demo');
+      const { data } = await API.post("/auth/demo");
       login(data.token, data.company);
-      toast.success('Demo workspace ready');
-      navigate('/dashboard');
+      toast.success("Demo workspace ready");
+      navigate("/dashboard");
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Demo login failed');
+      toast.error(error.response?.data?.message || "Demo login failed");
     } finally {
       setLoading(false);
     }
@@ -108,10 +108,10 @@ const Register = () => {
             disabled={loading}
             style={{
               ...styles.btn,
-              opacity: loading ? 0.7 : 1
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? 'Creating account...' : 'Create account →'}
+            {loading ? "Creating account..." : "Create account →"}
           </button>
         </form>
 
@@ -123,18 +123,19 @@ const Register = () => {
             disabled={loading}
             style={{
               ...styles.demoBtn,
-              opacity: loading ? 0.7 : 1
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? 'Preparing demo...' : 'Try Demo Account'}
+            {loading ? "Preparing demo..." : "Try Demo Account"}
           </button>
           <p style={styles.demoHint}>
-            Explore a preloaded workspace with sample tickets, documents, and analytics instantly.
+            Explore a preloaded workspace with sample tickets, documents, and
+            analytics instantly.
           </p>
         </div>
 
         <p style={styles.footer}>
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link to="/login" style={styles.link}>
             Sign in
           </Link>
@@ -146,129 +147,129 @@ const Register = () => {
 
 const styles = {
   container: {
-    minHeight: '100vh',
-    background: 'var(--bg)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem'
+    minHeight: "100vh",
+    background: "var(--bg)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "1rem",
   },
   card: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: '16px',
-    padding: '2.5rem',
-    width: '100%',
-    maxWidth: '420px'
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "16px",
+    padding: "2.5rem",
+    width: "100%",
+    maxWidth: "420px",
   },
   logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '2rem'
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "2rem",
   },
   logoIcon: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '10px',
-    background: 'var(--accent)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '13px',
-    fontWeight: '700',
-    color: '#fff'
+    width: "36px",
+    height: "36px",
+    borderRadius: "10px",
+    background: "var(--accent)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#fff",
   },
   logoText: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: 'var(--text)'
+    fontSize: "1.1rem",
+    fontWeight: "600",
+    color: "var(--text)",
   },
   title: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '0.4rem',
-    color: 'var(--text)'
+    fontSize: "1.5rem",
+    fontWeight: "600",
+    marginBottom: "0.4rem",
+    color: "var(--text)",
   },
   subtitle: {
-    color: 'var(--muted)',
-    marginBottom: '2rem',
-    fontSize: '0.9rem'
+    color: "var(--muted)",
+    marginBottom: "2rem",
+    fontSize: "0.9rem",
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem'
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.25rem",
   },
   field: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.4rem'
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.4rem",
   },
   label: {
-    fontSize: '0.85rem',
-    fontWeight: '500',
-    color: 'var(--text)'
+    fontSize: "0.85rem",
+    fontWeight: "500",
+    color: "var(--text)",
   },
   input: {
-    background: 'var(--surface2)',
-    border: '1px solid var(--border)',
-    borderRadius: '8px',
-    padding: '0.75rem 1rem',
-    color: 'var(--text)',
-    fontSize: '0.9rem',
-    outline: 'none',
-    width: '100%'
+    background: "var(--surface2)",
+    border: "1px solid var(--border)",
+    borderRadius: "8px",
+    padding: "0.75rem 1rem",
+    color: "var(--text)",
+    fontSize: "0.9rem",
+    outline: "none",
+    width: "100%",
   },
   btn: {
-    background: 'var(--accent)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '0.8rem',
-    fontSize: '0.95rem',
-    fontWeight: '500',
-    marginTop: '0.5rem',
-    transition: 'opacity 0.2s'
+    background: "var(--accent)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    padding: "0.8rem",
+    fontSize: "0.95rem",
+    fontWeight: "500",
+    marginTop: "0.5rem",
+    transition: "opacity 0.2s",
   },
   demoSection: {
-    marginTop: '1.5rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    alignItems: 'center'
+    marginTop: "1.5rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    alignItems: "center",
   },
   demoDivider: {
-    fontSize: '0.85rem',
-    color: 'var(--muted)'
+    fontSize: "0.85rem",
+    color: "var(--muted)",
   },
   demoBtn: {
-    width: '100%',
-    background: 'transparent',
-    color: 'var(--accent)',
-    border: '1px solid var(--accent)',
-    borderRadius: '8px',
-    padding: '0.8rem',
-    fontSize: '0.95rem',
-    fontWeight: '500',
-    cursor: 'pointer'
+    width: "100%",
+    background: "transparent",
+    color: "var(--accent)",
+    border: "1px solid var(--accent)",
+    borderRadius: "8px",
+    padding: "0.8rem",
+    fontSize: "0.95rem",
+    fontWeight: "500",
+    cursor: "pointer",
   },
   demoHint: {
-    color: 'var(--muted)',
-    fontSize: '0.85rem',
-    textAlign: 'center',
-    lineHeight: '1.4'
+    color: "var(--muted)",
+    fontSize: "0.85rem",
+    textAlign: "center",
+    lineHeight: "1.4",
   },
   footer: {
-    textAlign: 'center',
-    marginTop: '1.5rem',
-    color: 'var(--muted)',
-    fontSize: '0.875rem'
+    textAlign: "center",
+    marginTop: "1.5rem",
+    color: "var(--muted)",
+    fontSize: "0.875rem",
   },
   link: {
-    color: 'var(--accent)',
-    fontWeight: '500'
-  }
+    color: "var(--accent)",
+    fontWeight: "500",
+  },
 };
 
 export default Register;

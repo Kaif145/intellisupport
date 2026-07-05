@@ -2,6 +2,7 @@ import express from 'express';
 import Ticket from '../models/Ticket.js';
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
+import Company from '../models/Company.js';
 import protect from '../middleware/auth.js';
 
 const router = express.Router();
@@ -17,6 +18,14 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'companyId, sessionId and visitorMessage are required'
+      });
+    }
+
+    const company = await Company.findById(companyId);
+    if (company?.isDemo) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo mode is read-only. Create a real account to create tickets.'
       });
     }
 
@@ -105,6 +114,13 @@ router.get('/', protect, async (req, res) => {
 // @access  Private
 router.put('/:id', protect, async (req, res) => {
   try {
+    if (req.isDemo) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo mode is read-only. Create a real account to update tickets.'
+      });
+    }
+
     const { status, priority } = req.body;
 
     const ticket = await Ticket.findOneAndUpdate(

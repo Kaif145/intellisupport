@@ -9,6 +9,13 @@ const router = express.Router();
 // @access  Private
 router.put('/bot', protect, async (req, res) => {
   try {
+    if (req.isDemo) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo mode is read-only. Create a real account to change settings.'
+      });
+    }
+
     const { botName, botColor, welcomeMessage, name } = req.body;
 
     const updatedCompany = await Company.findByIdAndUpdate(
@@ -47,6 +54,13 @@ router.put('/bot', protect, async (req, res) => {
 // @access  Private
 router.put('/password', protect, async (req, res) => {
   try {
+    if (req.isDemo) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo mode is read-only. Create a real account to change your password.'
+      });
+    }
+
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {

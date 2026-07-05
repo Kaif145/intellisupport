@@ -28,6 +28,7 @@ const protect = async (req, res, next) => {
     }
 
     req.company = company;
+    req.isDemo = Boolean(company.isDemo);
     return next();
 
   } catch (error) {

@@ -46,6 +46,13 @@ const upload = multer({
 // @access  Private
 router.post('/upload', protect, upload.single('document'), async (req, res) => {
   try {
+    if (req.isDemo) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo mode is read-only. Create a real account to upload documents.'
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -134,6 +141,13 @@ router.get('/', protect, async (req, res) => {
 // @access  Private
 router.delete('/:id', protect, async (req, res) => {
   try {
+    if (req.isDemo) {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo mode is read-only. Create a real account to manage documents.'
+      });
+    }
+
     const document = await Document.findOne({
       _id: req.params.id,
       company: req.company._id
