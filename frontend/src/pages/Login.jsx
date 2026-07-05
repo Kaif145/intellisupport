@@ -29,6 +29,30 @@ const Login = () => {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    try {
+      const { data } = await API.post('/auth/demo');
+      login(data.token, data.company);
+      toast.success('Demo workspace ready');
+      navigate('/dashboard');
+    } catch (error) {
+      try {
+        const { data } = await API.post('/auth/login', {
+          email: 'demo@intellisupport.app',
+          password: 'DemoPass123!'
+        });
+        login(data.token, data.company);
+        toast.success('Demo workspace ready');
+        navigate('/dashboard');
+      } catch (fallbackError) {
+        toast.error(fallbackError.response?.data?.message || 'Demo login failed');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -79,6 +103,24 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign in →'}
           </button>
         </form>
+
+        <div style={styles.demoSection}>
+          <div style={styles.demoDivider}>or</div>
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading}
+            style={{
+              ...styles.demoBtn,
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? 'Preparing demo...' : 'Try Demo Account'}
+          </button>
+          <p style={styles.demoHint}>
+            Explore a preloaded workspace with sample tickets, documents, and analytics in seconds.
+          </p>
+        </div>
 
         <p style={styles.footer}>
           Don't have an account?{' '}
@@ -178,6 +220,35 @@ const styles = {
     fontWeight: '500',
     marginTop: '0.5rem',
     transition: 'opacity 0.2s'
+  },
+  demoSection: {
+    marginTop: '1rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.65rem'
+  },
+  demoDivider: {
+    textAlign: 'center',
+    color: 'var(--muted)',
+    fontSize: '0.8rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em'
+  },
+  demoBtn: {
+    background: 'transparent',
+    color: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: '8px',
+    padding: '0.8rem',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    cursor: 'pointer'
+  },
+  demoHint: {
+    color: 'var(--muted)',
+    fontSize: '0.8rem',
+    lineHeight: 1.5,
+    textAlign: 'center'
   },
   footer: {
     textAlign: 'center',

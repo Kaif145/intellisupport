@@ -37,6 +37,20 @@ const Register = () => {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    try {
+      const { data } = await API.post('/auth/demo');
+      login(data.token, data.company);
+      toast.success('Demo workspace ready');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -100,6 +114,24 @@ const Register = () => {
             {loading ? 'Creating account...' : 'Create account →'}
           </button>
         </form>
+
+        <div style={styles.demoSection}>
+          <div style={styles.demoDivider}>or</div>
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading}
+            style={{
+              ...styles.demoBtn,
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? 'Preparing demo...' : 'Try Demo Account'}
+          </button>
+          <p style={styles.demoHint}>
+            Explore a preloaded workspace with sample tickets, documents, and analytics instantly.
+          </p>
+        </div>
 
         <p style={styles.footer}>
           Already have an account?{' '}
@@ -198,6 +230,34 @@ const styles = {
     fontWeight: '500',
     marginTop: '0.5rem',
     transition: 'opacity 0.2s'
+  },
+  demoSection: {
+    marginTop: '1.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    alignItems: 'center'
+  },
+  demoDivider: {
+    fontSize: '0.85rem',
+    color: 'var(--muted)'
+  },
+  demoBtn: {
+    width: '100%',
+    background: 'transparent',
+    color: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: '8px',
+    padding: '0.8rem',
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    cursor: 'pointer'
+  },
+  demoHint: {
+    color: 'var(--muted)',
+    fontSize: '0.85rem',
+    textAlign: 'center',
+    lineHeight: '1.4'
   },
   footer: {
     textAlign: 'center',

@@ -47,9 +47,7 @@ const Documents = () => {
     formData.append('document', file);
 
     try {
-      await API.post('/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await API.post('/documents/upload', formData);
       toast.success('Document uploaded! Indexing started...');
       fetchDocuments();
 
