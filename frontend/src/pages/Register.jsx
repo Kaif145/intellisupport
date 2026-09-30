@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import API from "../api/axios";
 import toast from "react-hot-toast";
+import "./Login.css";
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -10,266 +11,334 @@ const Register = () => {
     email: "",
     password: "",
   });
-  const [loading, setLoading] = useState(false);
+
+  const [pending, setPending] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const busyRef = useRef(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const loading = pending !== null;
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setErrorMessage("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+  const showError = (error, fallback) => {
+    const message = error?.response?.data?.message;
+    const text = typeof message === "string" ? message : fallback;
+
+    setErrorMessage(text);
+    toast.error(text);
+  };
+
+  const finishLogin = (data, message) => {
+    login(data.token, data.company);
+    toast.success(message);
+    navigate("/dashboard");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (busyRef.current) return;
+
+    if (!form.name.trim()) {
+      showError(null, "Please enter your company name.");
       return;
     }
-    setLoading(true);
+
+    if (form.password.length < 6) {
+      showError(null, "Password must be at least 6 characters.");
+      return;
+    }
+
+    busyRef.current = true;
+    setPending("register");
+    setErrorMessage("");
+
     try {
-      const { data } = await API.post("/auth/register", form);
-      login(data.token, data.company);
-      toast.success("Account created successfully!");
-      navigate("/dashboard");
+      const { data } = await API.post("/auth/register", {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      });
+
+      finishLogin(data, "Account created successfully!");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      showError(error, "Unable to create your account. Please try again.");
     } finally {
-      setLoading(false);
+      busyRef.current = false;
+      setPending(null);
     }
   };
 
   const handleDemoLogin = async () => {
-    setLoading(true);
+    if (busyRef.current) return;
+
+    busyRef.current = true;
+    setPending("demo");
+    setErrorMessage("");
+
     try {
       const { data } = await API.post("/auth/demo");
-      login(data.token, data.company);
-      toast.success("Demo workspace ready");
-      navigate("/dashboard");
+      finishLogin(data, "Demo workspace ready");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Demo login failed");
+      showError(error, "Unable to open the demo. Please try again.");
     } finally {
-      setLoading(false);
+      busyRef.current = false;
+      setPending(null);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        {/* Logo */}
-        <div style={styles.logo}>
-          <div style={styles.logoIcon}>IS</div>
-          <span style={styles.logoText}>IntelliSupport</span>
+    <main className="login-page">
+      {/* Brand and illustration */}
+      <section
+        className="login-story"
+        aria-labelledby="register-story-title"
+      >
+        <Link to="/" className="login-brand">
+          <span className="login-brand-icon" aria-hidden="true">
+            IS
+          </span>
+          IntelliSupport
+        </Link>
+
+        <div className="login-story-content">
+          <p className="login-eyebrow">A BETTER FIRST CONVERSATION</p>
+
+          <h2 id="register-story-title">
+            Your business.
+            <br />
+            Your people.
+            <br />
+            A little closer.
+          </h2>
+
+          <p className="login-story-description">
+            Create a home for your customer conversations. Bring your
+            knowledge together and help your team deliver thoughtful
+            support.
+          </p>
+
+          <figure className="login-illustration">
+            <img
+              src="/support-hero.png"
+              alt="Illustration of a support specialist helping a customer."
+              width="1448"
+              height="1086"
+            />
+          </figure>
+
+          <div className="login-story-caption">
+            <span aria-hidden="true">↗</span>
+
+            <p>
+              <strong>Make helpful your everyday.</strong>
+              <span>
+                From a first question to a personal conversation.
+              </span>
+            </p>
+          </div>
         </div>
 
-        <h1 style={styles.title}>Create your account</h1>
-        <p style={styles.subtitle}>Start your free AI support chatbot today</p>
+        <p className="login-story-footer">
+          Your knowledge. Your team. One support workspace.
+        </p>
+      </section>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Company Name</label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Acme Inc."
-              required
-              style={styles.input}
-            />
+      {/* Registration form */}
+      <section
+        className="login-panel"
+        aria-labelledby="register-title"
+      >
+        <Link to="/" className="login-back">
+          <span aria-hidden="true">←</span>
+          Back to home
+        </Link>
+
+        <div className="login-form-wrap">
+          <div className="login-heading">
+            <span className="login-label">LET’S GET YOU SET UP</span>
+
+            <h1 id="register-title">
+              Make room for better support.
+            </h1>
+
+            <p>Create your IntelliSupport workspace.</p>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="you@company.com"
-              required
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Min. 6 characters"
-              required
-              style={styles.input}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              ...styles.btn,
-              opacity: loading ? 0.7 : 1,
-            }}
+          <form
+            onSubmit={handleSubmit}
+            className="login-form"
+            aria-busy={loading}
           >
-            {loading ? "Creating account..." : "Create account →"}
-          </button>
-        </form>
+            <div className="login-field">
+              <label htmlFor="register-company">
+                Company name
+              </label>
 
-        <div style={styles.demoSection}>
-          <div style={styles.demoDivider}>or</div>
+              <input
+                id="register-company"
+                type="text"
+                name="name"
+                autoComplete="organization"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Your company or business"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <label htmlFor="register-email">
+                Work email
+              </label>
+
+              <input
+                id="register-email"
+                type="email"
+                name="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={form.email}
+                onChange={handleChange}
+                placeholder="you@company.com"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <label htmlFor="register-password">
+                Create a password
+              </label>
+
+              <div className="login-password-wrap">
+                <input
+                  id="register-password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Choose your password"
+                  minLength={6}
+                  aria-describedby="register-password-hint"
+                  disabled={loading}
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="login-password-toggle"
+                  onClick={() => {
+                    setShowPassword((visible) => !visible);
+                  }}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  aria-controls="register-password"
+                  disabled={loading}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              <small
+                id="register-password-hint"
+                className="register-password-hint"
+              >
+                Use at least 6 characters.
+              </small>
+            </div>
+
+            {errorMessage && (
+              <p className="login-error" role="alert">
+                {errorMessage}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="login-button login-button-primary"
+              disabled={loading}
+            >
+              {pending === "register" ? (
+                <>
+                  <span
+                    className="login-spinner"
+                    aria-hidden="true"
+                  />
+                  Creating your workspace…
+                </>
+              ) : (
+                <>
+                  Create your workspace
+                  <span className="login-arrow" aria-hidden="true">
+                    →
+                  </span>
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="login-divider">
+            <span>WANT TO LOOK AROUND FIRST?</span>
+          </div>
+
           <button
             type="button"
+            className="login-button login-button-demo"
             onClick={handleDemoLogin}
             disabled={loading}
-            style={{
-              ...styles.demoBtn,
-              opacity: loading ? 0.7 : 1,
-            }}
           >
-            {loading ? "Preparing demo..." : "Try Demo Account"}
+            {pending === "demo" ? (
+              <>
+                <span
+                  className="login-spinner"
+                  aria-hidden="true"
+                />
+                Preparing your demo…
+              </>
+            ) : (
+              <>
+                Explore the demo workspace
+                <span className="login-arrow" aria-hidden="true">
+                  ↗
+                </span>
+              </>
+            )}
           </button>
-          <p style={styles.demoHint}>
-            Explore a preloaded workspace with sample tickets, documents, and
-            analytics instantly.
+
+          <p className="login-demo-hint">
+            Explore sample content before creating your own workspace.
+          </p>
+
+          <p className="login-register">
+            Already have an account?{" "}
+            <Link to="/login">Sign in</Link>
           </p>
         </div>
 
-        <p style={styles.footer}>
-          Already have an account?{" "}
-          <Link to="/login" style={styles.link}>
-            Sign in
-          </Link>
+        <p className="login-panel-footer">
+          © {new Date().getFullYear()} IntelliSupport
         </p>
-      </div>
-    </div>
+      </section>
+    </main>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "var(--bg)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "1rem",
-  },
-  card: {
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    borderRadius: "16px",
-    padding: "2.5rem",
-    width: "100%",
-    maxWidth: "420px",
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    marginBottom: "2rem",
-  },
-  logoIcon: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "10px",
-    background: "var(--accent)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#fff",
-  },
-  logoText: {
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "var(--text)",
-  },
-  title: {
-    fontSize: "1.5rem",
-    fontWeight: "600",
-    marginBottom: "0.4rem",
-    color: "var(--text)",
-  },
-  subtitle: {
-    color: "var(--muted)",
-    marginBottom: "2rem",
-    fontSize: "0.9rem",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.25rem",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.4rem",
-  },
-  label: {
-    fontSize: "0.85rem",
-    fontWeight: "500",
-    color: "var(--text)",
-  },
-  input: {
-    background: "var(--surface2)",
-    border: "1px solid var(--border)",
-    borderRadius: "8px",
-    padding: "0.75rem 1rem",
-    color: "var(--text)",
-    fontSize: "0.9rem",
-    outline: "none",
-    width: "100%",
-  },
-  btn: {
-    background: "var(--accent)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    padding: "0.8rem",
-    fontSize: "0.95rem",
-    fontWeight: "500",
-    marginTop: "0.5rem",
-    transition: "opacity 0.2s",
-  },
-  demoSection: {
-    marginTop: "1.5rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-    alignItems: "center",
-  },
-  demoDivider: {
-    fontSize: "0.85rem",
-    color: "var(--muted)",
-  },
-  demoBtn: {
-    width: "100%",
-    background: "transparent",
-    color: "var(--accent)",
-    border: "1px solid var(--accent)",
-    borderRadius: "8px",
-    padding: "0.8rem",
-    fontSize: "0.95rem",
-    fontWeight: "500",
-    cursor: "pointer",
-  },
-  demoHint: {
-    color: "var(--muted)",
-    fontSize: "0.85rem",
-    textAlign: "center",
-    lineHeight: "1.4",
-  },
-  footer: {
-    textAlign: "center",
-    marginTop: "1.5rem",
-    color: "var(--muted)",
-    fontSize: "0.875rem",
-  },
-  link: {
-    color: "var(--accent)",
-    fontWeight: "500",
-  },
 };
 
 export default Register;

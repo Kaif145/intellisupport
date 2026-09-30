@@ -1,265 +1,273 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import API from '../api/axios';
-import toast from 'react-hot-toast';
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import API from "../api/axios";
+import toast from "react-hot-toast";
+import "./Login.css";
 
 const Login = () => {
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [pending, setPending] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const busyRef = useRef(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const loading = pending !== null;
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((previous) => ({ ...previous, [name]: value }));
+    setErrorMessage("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const finishLogin = (data, message) => {
+    login(data.token, data.company);
+    toast.success(message);
+    navigate("/dashboard");
+  };
+
+  const showError = (error, fallback) => {
+    const message = error.response?.data?.message;
+    const text = typeof message === "string" ? message : fallback;
+
+    setErrorMessage(text);
+    toast.error(text);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (busyRef.current) return;
+
+    busyRef.current = true;
+    setPending("login");
+    setErrorMessage("");
+
     try {
-      const { data } = await API.post('/auth/login', form);
-      login(data.token, data.company);
-      toast.success('Welcome back!');
-      navigate('/dashboard');
+      const { data } = await API.post("/auth/login", {
+        email: form.email.trim(),
+        password: form.password,
+      });
+
+      finishLogin(data, "Welcome back!");
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      showError(error, "Unable to sign in. Please try again.");
     } finally {
-      setLoading(false);
+      busyRef.current = false;
+      setPending(null);
     }
   };
 
   const handleDemoLogin = async () => {
-    setLoading(true);
+    if (busyRef.current) return;
+
+    busyRef.current = true;
+    setPending("demo");
+    setErrorMessage("");
+
     try {
-      const { data } = await API.post('/auth/demo');
-      login(data.token, data.company);
-      toast.success('Demo workspace ready');
-      navigate('/dashboard');
-    } catch (error) {
+      let data;
+
       try {
-        const { data } = await API.post('/auth/login', {
-          email: 'demo@intellisupport.app',
-          password: 'DemoPass123!'
+        const response = await API.post("/auth/demo");
+        data = response.data;
+      } catch {
+        // Preserves your existing demo-account fallback.
+        const response = await API.post("/auth/login", {
+          email: "demo@intellisupport.app",
+          password: "DemoPass123!",
         });
-        login(data.token, data.company);
-        toast.success('Demo workspace ready');
-        navigate('/dashboard');
-      } catch (fallbackError) {
-        toast.error(fallbackError.response?.data?.message || 'Demo login failed');
+
+        data = response.data;
       }
+
+      finishLogin(data, "Demo workspace ready");
+    } catch (error) {
+      showError(error, "Unable to open the demo. Please try again.");
     } finally {
-      setLoading(false);
+      busyRef.current = false;
+      setPending(null);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        {/* Logo */}
-        <div style={styles.logo}>
-          <div style={styles.logoIcon}>IS</div>
-          <span style={styles.logoText}>IntelliSupport</span>
+    <main className="login-page">
+      <section className="login-story" aria-labelledby="login-story-title">
+        <Link to="/" className="login-brand">
+          <span className="login-brand-icon" aria-hidden="true">IS</span>
+          IntelliSupport
+        </Link>
+
+        <div className="login-story-content">
+          <p className="login-eyebrow">BUILT AROUND PEOPLE</p>
+
+          <h2 id="login-story-title">
+            Every conversation.
+            <br />
+            A little more human.
+          </h2>
+
+          <p className="login-story-description">
+            Your knowledge, your team, and your customer conversations.
+            Together in one thoughtful workspace.
+          </p>
+
+          <figure className="login-illustration">
+            <img
+              src="/support-hero.webp"
+              alt="Illustration of a support specialist helping a customer."
+              width="1448"
+              height="1086"
+            />
+          </figure>
+
+          <div className="login-story-caption">
+            <span aria-hidden="true">↗</span>
+            <p>
+              <strong>Helpful technology. Human connections.</strong>
+              <span>Make room for the conversations that matter.</span>
+            </p>
+          </div>
         </div>
 
-        <h1 style={styles.title}>Welcome back</h1>
-        <p style={styles.subtitle}>Sign in to your dashboard</p>
+        <p className="login-story-footer">
+          A workspace for better customer support.
+        </p>
+      </section>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="you@company.com"
-              required
-              style={styles.input}
-            />
+      <section className="login-panel" aria-labelledby="login-title">
+        <Link to="/" className="login-back">
+          <span aria-hidden="true">←</span>
+          Back to home
+        </Link>
+
+        <div className="login-form-wrap">
+          <div className="login-heading">
+            <span className="login-label">YOUR WORKSPACE AWAITS</span>
+            <h1 id="login-title">Good to see you again.</h1>
+            <p>Sign in to pick up the conversation.</p>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-              style={styles.input}
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{
-              ...styles.btn,
-              opacity: loading ? 0.7 : 1
-            }}
+          <form
+            onSubmit={handleSubmit}
+            className="login-form"
+            aria-busy={loading}
           >
-            {loading ? 'Signing in...' : 'Sign in →'}
-          </button>
-        </form>
+            <div className="login-field">
+              <label htmlFor="login-email">Work email</label>
+              <input
+                id="login-email"
+                type="email"
+                name="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={form.email}
+                onChange={handleChange}
+                placeholder="you@company.com"
+                disabled={loading}
+                required
+              />
+            </div>
 
-        <div style={styles.demoSection}>
-          <div style={styles.demoDivider}>or</div>
+            <div className="login-field">
+              <label htmlFor="login-password">Password</label>
+
+              <div className="login-password-wrap">
+                <input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  disabled={loading}
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="login-password-toggle"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  aria-controls="login-password"
+                  disabled={loading}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            {errorMessage && (
+              <p className="login-error" role="alert">
+                {errorMessage}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="login-button login-button-primary"
+              disabled={loading}
+            >
+              {pending === "login" ? (
+                <>
+                  <span className="login-spinner" aria-hidden="true" />
+                  Signing in…
+                </>
+              ) : (
+                <>
+                  Sign in to workspace
+                  <span className="login-arrow" aria-hidden="true">→</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="login-divider">
+            <span>NEW TO INTELLISUPPORT?</span>
+          </div>
+
           <button
             type="button"
+            className="login-button login-button-demo"
             onClick={handleDemoLogin}
             disabled={loading}
-            style={{
-              ...styles.demoBtn,
-              opacity: loading ? 0.7 : 1
-            }}
           >
-            {loading ? 'Preparing demo...' : 'Try Demo Account'}
+            {pending === "demo" ? (
+              <>
+                <span className="login-spinner" aria-hidden="true" />
+                Preparing your demo…
+              </>
+            ) : (
+              <>
+                Explore the demo workspace
+                <span className="login-arrow" aria-hidden="true">↗</span>
+              </>
+            )}
           </button>
-          <p style={styles.demoHint}>
-            Explore a preloaded workspace with sample tickets, documents, and analytics in seconds.
+
+          <p className="login-demo-hint">
+            Take a look around with sample content.
+            No account creation needed.
+          </p>
+
+          <p className="login-register">
+            Ready for your own workspace?{" "}
+            <Link to="/register">Create an account</Link>
           </p>
         </div>
 
-        <p style={styles.footer}>
-          Don't have an account?{' '}
-          <Link to="/register" style={styles.link}>
-            Create one free
-          </Link>
+        <p className="login-panel-footer">
+          © {new Date().getFullYear()} IntelliSupport
         </p>
-      </div>
-    </div>
+      </section>
+    </main>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    background: 'var(--bg)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem'
-  },
-  card: {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: '16px',
-    padding: '2.5rem',
-    width: '100%',
-    maxWidth: '420px'
-  },
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '2rem'
-  },
-  logoIcon: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '10px',
-    background: 'var(--accent)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '13px',
-    fontWeight: '700',
-    color: '#fff'
-  },
-  logoText: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: 'var(--text)'
-  },
-  title: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '0.4rem',
-    color: 'var(--text)'
-  },
-  subtitle: {
-    color: 'var(--muted)',
-    marginBottom: '2rem',
-    fontSize: '0.9rem'
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem'
-  },
-  field: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.4rem'
-  },
-  label: {
-    fontSize: '0.85rem',
-    fontWeight: '500',
-    color: 'var(--text)'
-  },
-  input: {
-    background: 'var(--surface2)',
-    border: '1px solid var(--border)',
-    borderRadius: '8px',
-    padding: '0.75rem 1rem',
-    color: 'var(--text)',
-    fontSize: '0.9rem',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    width: '100%'
-  },
-  btn: {
-    background: 'var(--accent)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '0.8rem',
-    fontSize: '0.95rem',
-    fontWeight: '500',
-    marginTop: '0.5rem',
-    transition: 'opacity 0.2s'
-  },
-  demoSection: {
-    marginTop: '1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.65rem'
-  },
-  demoDivider: {
-    textAlign: 'center',
-    color: 'var(--muted)',
-    fontSize: '0.8rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  },
-  demoBtn: {
-    background: 'transparent',
-    color: 'var(--accent)',
-    border: '1px solid var(--accent)',
-    borderRadius: '8px',
-    padding: '0.8rem',
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    cursor: 'pointer'
-  },
-  demoHint: {
-    color: 'var(--muted)',
-    fontSize: '0.8rem',
-    lineHeight: 1.5,
-    textAlign: 'center'
-  },
-  footer: {
-    textAlign: 'center',
-    marginTop: '1.5rem',
-    color: 'var(--muted)',
-    fontSize: '0.875rem'
-  },
-  link: {
-    color: 'var(--accent)',
-    fontWeight: '500'
-  }
 };
 
 export default Login;
