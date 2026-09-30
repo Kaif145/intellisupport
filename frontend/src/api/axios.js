@@ -2,12 +2,9 @@ import axios from "axios";
 
 const getApiBaseUrl = () => {
   const configuredUrl = import.meta.env.VITE_API_URL?.trim();
-  if (configuredUrl) {
-    return configuredUrl.replace(/\/$/, "");
-  }
 
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/api`;
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/+$/, "");
   }
 
   return "http://localhost:5000/api";
